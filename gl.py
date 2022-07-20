@@ -21,6 +21,7 @@ def NewColor(r, g, b):
         int(g*255),
         int(r*255)
     ])
+
 class Renderer(object):
     def __init__(self, width, height):#Constructor
         self.width = width
@@ -150,3 +151,48 @@ class Renderer(object):
             for y in range(self.height):
                 for x in range(self.width):
                     file.write(self.pixels[x][y])
+
+    def polygon(self, vertices, clr = None):
+        for i in range(len(vertices)):
+            self.glLine(vertices[i], vertices[(i+1)%len(vertices)], clr)
+    
+    def filled_polygon(self, vertices, clr_borde = None, clr_relleno = None): 
+        self.polygon(vertices, clr = clr_borde)
+        max_y = -1
+        max_x = -1
+        min_y = self.height
+        min_x = self.width
+        #Encontrando el cuadro donde esta la figura
+        for vertice in vertices: 
+            #-------Para x-------
+            #Minimo
+            min_x = vertice[0] if(vertice[0]<min_x) else min_x
+            #Maximo
+            max_x  = vertice[0] if(vertice[0]>max_x) else max_x
+            #-------Para Y-------
+            #Minimo
+            min_y  =  vertice[1] if(vertice[1]<min_y) else min_y
+            #Maximo
+            max_y = vertice[1] if (vertice[1]>max_y) else max_y
+
+        # Rastreando dibujo
+        for y in range(min_y, max_y):
+            puntos_de_borde = []
+            le_precede_otro_pixel_de_borde = False
+            for x in range(min_x, max_x):
+                if(self.pixels[x][y]!=self.clearColor):#Encontro algo que no es fondo
+                    if(le_precede_otro_pixel_de_borde):#Si antes de este pixel ya habia uno coloreado, elimina anterior y deja este en su lugar
+                        if(type(puntos_de_borde[len(puntos_de_borde)-1])==list):
+                            list(puntos_de_borde[len(puntos_de_borde)-1]).append(V2(x, y))
+                        else:
+                            primer_punto_de_sucesion = puntos_de_borde[len(puntos_de_borde)-1]
+                            puntos_de_borde.pop(len(puntos_de_borde)-1)
+                            puntos_de_borde.append([primer_punto_de_sucesion, V2(x, y)])
+                    else: 
+                        puntos_de_borde.append(V2(x, y))
+                    le_precede_otro_pixel_de_borde = True
+                else:#Encontro el color de fondo
+                    le_precede_otro_pixel_de_borde = False
+            print(puntos_de_borde)
+            
+

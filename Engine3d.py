@@ -1,6 +1,6 @@
 import math
 from gl import Renderer, NewColor, V2
-width, height = 512, 512
+width, height = 1024, 512
 rend = Renderer(width, height)
 
 """
@@ -23,11 +23,13 @@ v1 = V2(0, 250)
 v0 = V2(250, 0)
 rend.glClear()
 
-rend.glLine(v0, v1, NewColor(1, 1, 1))
 
-
-
+vertices_de_poligono_1 = [V2(165, 380), V2(185, 360) , V2(180, 330) , V2(207, 345) , V2(233, 330) , V2(230, 360) , V2(250, 380),
+                        V2(220, 385), V2(205, 410), V2(193, 383)
+]
 color_poligono_1 = NewColor(1, 0, 0)
+
+rend.filled_polygon(vertices_de_poligono_1, color_poligono_1, color_poligono_1)
 
 rend.glFinish('output.bmp')
 print('Fin de programa')
