@@ -48,10 +48,10 @@ color_poligono_1 = NewColor(1, 0, 0)
 Para el metodo que use es importante el orden de aqui en adelante
 
 '''
-rend.filled_polygon(vertices_de_poligono_4, color_poligono_1, color_poligono_1, [vertices_de_poligono_5])
-rend.filled_polygon(vertices_de_poligono_1, color_poligono_1, color_poligono_1)
-rend.filled_polygon(vertices_de_poligono_2, color_poligono_1, color_poligono_1)
-rend.filled_polygon(vertices_de_poligono_3, color_poligono_1, color_poligono_1)
+rend.filled_polygon(vertices_de_poligono_4, color_poligono_1, NewColor(0, 1, 0), [vertices_de_poligono_5])
+rend.filled_polygon(vertices_de_poligono_1, color_poligono_1, NewColor(0, 1, 0))
+rend.filled_polygon(vertices_de_poligono_2, color_poligono_1, NewColor(0, 1, 0))
+rend.filled_polygon(vertices_de_poligono_3, color_poligono_1, NewColor(0, 1, 0))
 
 rend.glFinish('output.bmp')
 print('Fin de programa')

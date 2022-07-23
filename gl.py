@@ -194,10 +194,11 @@ class Renderer(object):
                 else:
                     last_pixel_is_border = False
             border_scan[y] = bordes
-        #Rellenado a partir de escaneo
+        #Seleccion de items por scan horizontal
+        candidatos_por_scan_horizontal = set()
         for y in border_scan:
             x_borders  = border_scan.get(y)
-            if(len(x_borders)>1):#Asegurarse que haya por lo menos 1
+            if len(x_borders)>1:#Asegurarse que haya por lo menos 1
                 bordes_tratados = 0
                 paint = True
                 while True:
@@ -208,9 +209,53 @@ class Renderer(object):
                         break
                     bordes_tratados += 1
                     if paint:
-                        self.glLine(V2(borde_inicial[-1], y), V2(borde_final[0], y), NewColor(0, 0, 1))
+                        for x in range(borde_inicial[-1], borde_final[0]):
+                            candidatos_por_scan_horizontal.add((x, y))
+                        #self.glLine(V2(borde_inicial[-1], y), V2(borde_final[0], y), NewColor(0, 0, 1))
                     paint = not paint                
 
+        #Escaneo vertical
+        border_scan_v = {}
+        for x in range(min_x, max_x):
+            last_pixel_is_border = False
+            bordes = []
+            for y in range(min_y, max_y):
+                if self.pixels[x][y] == clr_borde:
+                    if not last_pixel_is_border:
+                        bordes.append([y])
+                    else:
+                        brd = list(bordes[-1])
+                        brd.append(y)
+                        bordes[-1] = brd
+                    last_pixel_is_border = True
+                else:
+                    last_pixel_is_border = False
+            border_scan_v[x] = bordes
+        #Seleccion de items por scan horizontal
+        candidatos_por_scan_vertical = set()
+        for x in border_scan_v:
+            y_borders  = border_scan_v.get(x)
+            if len(y_borders)>1:#Asegurarse que haya por lo menos 1
+                bordes_tratados = 0
+                paint = True
+                while True:
+                    borde_inicial  = y_borders[bordes_tratados]
+                    try:
+                        borde_final  = y_borders[bordes_tratados+1]
+                    except:
+                        break
+                    bordes_tratados += 1
+                    if paint:
+                        for y in range(borde_inicial[-1], borde_final[0]):
+                            candidatos_por_scan_vertical.add((x, y))
+                        #self.glLine(V2(borde_inicial[-1], y), V2(borde_final[0], y), NewColor(0, 0, 1))
+                    paint = not paint 
+        
+        #Coincidentes de ambos scaneos
+        for tupla in candidatos_por_scan_vertical.intersection(candidatos_por_scan_horizontal):
+            x = tupla[0]
+            y = tupla[1]
+            self.pixels[x][y] = clr_relleno
         self.polygon(vertices, clr_borde)
         #self.polygon([V2(min_x, min_y), V2(max_x, min_y), V2(max_x, max_y), V2(min_x, max_y)], NewColor(0, 1, 0))    
         
