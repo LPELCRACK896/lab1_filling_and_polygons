@@ -1,3 +1,4 @@
+from re import L
 import struct 
 from collections import namedtuple
 
@@ -108,8 +109,6 @@ class Renderer(object):
                 
                 limit += 1
     
-
-
     def glSecondaryColor(self, r, g, b):
         self.secondary_color  = NewColor(r, g, b)
     
@@ -156,7 +155,7 @@ class Renderer(object):
         for i in range(len(vertices)):
             self.glLine(vertices[i], vertices[(i+1)%len(vertices)], clr)
     
-    def filled_polygon(self, vertices, clr_borde = None, clr_relleno = None): 
+    def filled_polygon(self, vertices, clr_borde = None, clr_relleno = None, insidePolygons = []):         
         self.polygon(vertices, clr = clr_borde)
         max_y = -1
         max_x = -1
@@ -174,25 +173,45 @@ class Renderer(object):
             min_y  =  vertice[1] if(vertice[1]<min_y) else min_y
             #Maximo
             max_y = vertice[1] if (vertice[1]>max_y) else max_y
-
-        # Rastreando dibujo
+        self.pixels[min_x][min_y] = NewColor(0, 1, 0)
+        self.pixels[max_x][min_y] = NewColor(0, 1, 0)
+        for polygon in insidePolygons:
+            self.polygon(polygon, clr_borde)
+        #Escaneo horizontal
+        border_scan = {}
         for y in range(min_y, max_y):
-            puntos_de_borde = []
-            le_precede_otro_pixel_de_borde = False
+            last_pixel_is_border = False
+            bordes = []
             for x in range(min_x, max_x):
-                if(self.pixels[x][y]!=self.clearColor):#Encontro algo que no es fondo
-                    if(le_precede_otro_pixel_de_borde):#Si antes de este pixel ya habia uno coloreado, elimina anterior y deja este en su lugar
-                        if(type(puntos_de_borde[len(puntos_de_borde)-1])==list):
-                            list(puntos_de_borde[len(puntos_de_borde)-1]).append(V2(x, y))
-                        else:
-                            primer_punto_de_sucesion = puntos_de_borde[len(puntos_de_borde)-1]
-                            puntos_de_borde.pop(len(puntos_de_borde)-1)
-                            puntos_de_borde.append([primer_punto_de_sucesion, V2(x, y)])
-                    else: 
-                        puntos_de_borde.append(V2(x, y))
-                    le_precede_otro_pixel_de_borde = True
-                else:#Encontro el color de fondo
-                    le_precede_otro_pixel_de_borde = False
-            print(puntos_de_borde)
-            
+                if self.pixels[x][y] == clr_borde:
+                    if not last_pixel_is_border:
+                        bordes.append([x])
+                    else:
+                        brd = list(bordes[-1])
+                        brd.append(x)
+                        bordes[-1] = brd
+                    last_pixel_is_border = True
+                else:
+                    last_pixel_is_border = False
+            border_scan[y] = bordes
+        #Rellenado a partir de escaneo
+        for y in border_scan:
+            x_borders  = border_scan.get(y)
+            if(len(x_borders)>1):#Asegurarse que haya por lo menos 1
+                bordes_tratados = 0
+                paint = True
+                while True:
+                    borde_inicial  = x_borders[bordes_tratados]
+                    try:
+                        borde_final  = x_borders[bordes_tratados+1]
+                    except:
+                        break
+                    bordes_tratados += 1
+                    if paint:
+                        self.glLine(V2(borde_inicial[-1], y), V2(borde_final[0], y), NewColor(0, 0, 1))
+                    paint = not paint                
+
+        self.polygon(vertices, clr_borde)
+        #self.polygon([V2(min_x, min_y), V2(max_x, min_y), V2(max_x, max_y), V2(min_x, max_y)], NewColor(0, 1, 0))    
+        
 
