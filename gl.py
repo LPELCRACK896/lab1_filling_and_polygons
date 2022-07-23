@@ -173,8 +173,7 @@ class Renderer(object):
             min_y  =  vertice[1] if(vertice[1]<min_y) else min_y
             #Maximo
             max_y = vertice[1] if (vertice[1]>max_y) else max_y
-        self.pixels[min_x][min_y] = NewColor(0, 1, 0)
-        self.pixels[max_x][min_y] = NewColor(0, 1, 0)
+        #Dibujo los poligonos internos
         for polygon in insidePolygons:
             self.polygon(polygon, clr_borde)
         #Escaneo horizontal
@@ -197,7 +196,7 @@ class Renderer(object):
         #Rellenado a partir de escaneo
         for y in border_scan:
             x_borders  = border_scan.get(y)
-            if(len(x_borders)>1):#Asegurarse que haya por lo menos 1
+            if len(x_borders)>1:#Asegurarse que haya por lo menos 1
                 bordes_tratados = 0
                 paint = True
                 while True:
@@ -208,10 +207,45 @@ class Renderer(object):
                         break
                     bordes_tratados += 1
                     if paint:
-                        self.glLine(V2(borde_inicial[-1], y), V2(borde_final[0], y), NewColor(0, 0, 1))
-                    paint = not paint                
+                        self.filled_line(V2(borde_inicial[-1], y), V2(borde_final[0], y), min_y, max_y ,clr_borde, NewColor(0, 0, 1))
+                        paint = not paint                
 
-        self.polygon(vertices, clr_borde)
-        #self.polygon([V2(min_x, min_y), V2(max_x, min_y), V2(max_x, max_y), V2(min_x, max_y)], NewColor(0, 1, 0))    
+        self.polygon(vertices, clr_borde)  
         
+    def filled_line(self,v0, v1, min_y, max_y, brdr_color, clr = None):
+        min_line = v0[0]
+        max_line = v1[0]
+        #x = v0[0]+1
+        for x in range(min_line, max_line):
+            y_move = v0[1]
+            found_up_and_down = False #Cambia a true solo si se encuentra pixel arriba y abajo
+            going_up = True #True = Hacia arriba, False = Hacia abajo
+            done_searching = False
+            #La idea de esto es que se asegure que el pixel que se desee 
+            #Busqueda de pixel arriba de este
+            while not done_searching:
+                if going_up:#Hacia arriba
+                    y_move += 1
+                    if y_move != max_y:
+                        if self.pixels[x][y_move]==brdr_color:
+                            going_up = False
+                            y_move = v0[1]
+                    else:
+                        done_searching = True # Si no encontro arriba, no vale la pena seguir buscando
+                        continue
+                else: #Va hacia abajo
+                    y_move -= 1
+                    if y_move != min_y:
+                        if self.pixels[x][y_move]==brdr_color:
+                            found_up_and_down = True
+                            done_searching = True
+                    else:
+                        done_searching = True
+                        y_move = v0[1]
+            if found_up_and_down:
+                self.pixels[x][v0[1]] = clr     
+        return found_up_and_down
+
+
+
 
