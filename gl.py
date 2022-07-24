@@ -174,6 +174,7 @@ class Renderer(object):
             #Maximo
             max_y = vertice[1] if (vertice[1]>max_y) else max_y
         min_y += 1
+        max_y += 1
         for polygon in insidePolygons:
             self.polygon(polygon, clr_borde)
         #Escaneo horizontal
