@@ -1,7 +1,7 @@
 from re import L
 import struct 
 from collections import namedtuple
-
+import random
 V2 = namedtuple('Point2', ['x', 'y'])
 
 def char(c):
@@ -155,7 +155,10 @@ class Renderer(object):
         for i in range(len(vertices)):
             self.glLine(vertices[i], vertices[(i+1)%len(vertices)], clr)
     
-    def filled_polygon(self, vertices, clr_borde = None, clr_relleno = None, insidePolygons = []):         
+    def filled_polygon(self, vertices, clr_borde = NewColor(1, 0, 0), clr_relleno = NewColor(0, 1, 0), insidePolygons = []):
+        clr_borde_original = clr_borde
+        while clr_borde == self.clearColor:
+            clr_borde = NewColor(random.random(), random.random(), random.random())
         self.polygon(vertices, clr = clr_borde)
         max_y = -1
         max_x = -1
@@ -174,43 +177,84 @@ class Renderer(object):
             #Maximo
             max_y = vertice[1] if (vertice[1]>max_y) else max_y
         min_y += 1
-        for polygon in insidePolygons:
-            self.polygon(polygon, clr_borde)
-        #Escaneo horizontal
-        border_scan = {}
-        for y in range(min_y, max_y):
-            last_pixel_is_border = False
-            bordes = []
-            for x in range(min_x, max_x):
+        min_x += 1
+        pixels_to_paint = []
+        pasaron_la_primera = 0
+        pasaron_la_segunda = 0
+        pasaron_la_tercera = 0
+        pasaron_la_cuarta = 0
+        for x in range(min_x, max_x+1):
+            for y in range(min_y, max_y+1):
                 if self.pixels[x][y] == clr_borde:
-                    if not last_pixel_is_border:
-                        bordes.append([x])
-                    else:
-                        brd = list(bordes[-1])
-                        brd.append(x)
-                        bordes[-1] = brd
-                    last_pixel_is_border = True
+                    break
                 else:
-                    last_pixel_is_border = False
-            border_scan[y] = bordes
-        #Rellenado a partir de escaneo
-        for y in border_scan:
-            x_borders  = border_scan.get(y)
-            if(len(x_borders)>1):#Asegurarse que haya por lo menos 1
-                bordes_tratados = 0
-                paint = True
-                while True:
-                    borde_inicial  = x_borders[bordes_tratados]
-                    try:
-                        borde_final  = x_borders[bordes_tratados+1]
-                    except:
-                        break
-                    bordes_tratados += 1
-                    if paint:
-                        self.glLine(V2(borde_inicial[-1], y), V2(borde_final[0], y), NewColor(0, 0, 1))
-                    paint = not paint                
+                    while True:
+                        has_up = False
+                        altura = y
+                        while not has_up:
+                            if self.pixels[x][altura] == clr_borde:
+                                has_up = True
+                            if altura==max_y:
+                                break
+                            altura += 1
+                        if not has_up:
+                            break
+                        #input(f"Llego hasta aca: {x, y}")
+                        pasaron_la_primera += 1
+                        self.pixels[x][y] = NewColor(0, 1, 0)
+                        has_down = False
+                        altura = y
+                        while not has_down:
+                            if self.pixels[x][altura] == clr_borde:
+                                has_down = True
+                            if altura<=min_y:
+                                break
+                            altura -= 1
+                        if not has_down:
+                            break
+                        #input("Alguien tiene que llegar hasta aca")
+                        pasaron_la_segunda += 1
 
-        self.polygon(vertices, clr_borde)
+                        has_left = False
+                        desplaz_x = x
+                        while not has_left:
+                            if self.pixels[desplaz_x][y] == clr_borde:
+                                has_left = True
+                            if desplaz_x == min_x:
+                                break
+                            desplaz_x -= 1
+                        if not has_left:
+                            break
+                        #input("Alguien tiene que llegar hasta aca")
+                        pasaron_la_tercera += 1
+
+                        has_right = False
+                        desplaz_x = x
+                        while not has_right:
+                            if self.pixels[desplaz_x][y] == clr_borde:
+                                has_right = True
+                            if desplaz_x == max_x:
+                                break
+                            desplaz_x += 1
+                        if not has_right:
+                            break
+                        #Si llego hasta aca es que esta rodeado de pixeles del borde
+                        #input("Alguien tiene que llegar hasta aca")
+                        pasaron_la_cuarta += 1
+
+                        pixels_to_paint.append((x, y))
+                        break
+        print(pasaron_la_primera)
+        print(pasaron_la_segunda)
+        print(pasaron_la_tercera)
+        print(pasaron_la_cuarta)
+        input()
+        for pixel in pixels_to_paint:
+            self.pixels[pixel[0]][pixel[1]] = clr_relleno
+        
+        for polygon in insidePolygons:
+            self.filled_polygon(polygon, clr_borde, self.clearColor)
+        self.polygon(vertices, clr_borde_original)
         #self.polygon([V2(min_x, min_y), V2(max_x, min_y), V2(max_x, max_y), V2(min_x, max_y)], NewColor(0, 1, 0))    
         
 
